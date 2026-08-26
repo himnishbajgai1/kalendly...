@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { MongoMemoryServer } from "mongodb-memory-server";
 
@@ -12,20 +12,23 @@ const mongod = await MongoMemoryServer.create({
     storageEngine: "wiredTiger",
   },
 });
+writeFileSync(resolve(".data/mongo-uri"), mongod.getUri(), "utf8");
 
+const port = process.env.KALENDLY_PORT ?? "3002";
+const localUrl = `http://localhost:${port}`;
 const appEnv = {
   ...process.env,
   MONGODB_URI: mongod.getUri(),
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? "kalendly-local-development-secret",
-  NEXTAUTH_URL: process.env.NEXTAUTH_URL ?? "http://localhost:3000",
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL ?? localUrl,
   ADMIN_EMAIL: process.env.ADMIN_EMAIL ?? "admin@local.test",
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ?? "kalendly-demo",
-  APP_URL: process.env.APP_URL ?? "http://localhost:3000",
+  APP_URL: process.env.APP_URL ?? localUrl,
   COMPOSIO_API_KEY: process.env.COMPOSIO_API_KEY ?? "local-development-placeholder",
 };
 
 const command = process.platform === "win32" ? "npm.cmd" : "npm";
-const app = spawn(command, ["run", "dev", "--", "--hostname", "0.0.0.0"], {
+const app = spawn(command, ["run", "dev", "--", "--hostname", "0.0.0.0", "--port", port], {
   env: appEnv,
   stdio: "inherit",
 });
