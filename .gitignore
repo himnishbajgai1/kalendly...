@@ -38,5 +38,8 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local development database
+.data/
+
 # vitest
 /coverage
